@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Content Builder</title>
+    
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/mhchem.min.js"></script>
+    
+    <!-- Marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border: #cbd5e1;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 400px;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .section-item {
+            padding: 0.75rem;
+            margin-bottom: 0.25rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .section-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .section-count {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* Canvas */
+        .canvas {
+            background: var(--bg-primary);
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .canvas-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .add-block-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .add-block-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px dashed var(--border);
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .add-block-btn:hover {
+            border-color: var(--primary);
+            background: var(--bg-tertiary);
+            color: var(--primary);
+        }
+
+        .block-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            margin-top: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .block-menu.active {
+            display: block;
+        }
+
+        .block-menu-group {
+            padding: 0.5rem;
+        }
+
+        .block-menu-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .block-menu-item {
+            padding: 0.75rem;
+            cursor: pointer;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .block-menu-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .block-menu-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .block-menu-info h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .block-menu-info p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Content Blocks */
+        .content-block {
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+            position: relative;
+            cursor: grab;
+        }
+
+        .content-block:hover {
+            border-color: var(--border);
+        }
+
+        .content-block.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .content-block.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .block-toolbar {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            padding: 0.25rem;
+            display: none;
+            gap: 0.25rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            z-index: 50;
+        }
+
+        .content-block.active .block-toolbar {
+            display: flex;
+        }
+
+        .block-drag-handle {
+            position: absolute;
+            left: -2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 0.25rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            color: var(--text-secondary);
+        }
+
+        .content-block:hover .block-drag-handle {
+            display: flex;
+        }
+
+        .block-content {
+            outline: none;
+            min-height: 1.5rem;
+            cursor: text;
+            border-radius: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .block-content:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        .block-content[contenteditable="true"] {
+            background: #fffef0;
+            padding: 0.25rem;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .block-content:not([contenteditable="true"]):hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Block Type Specific Styles */
+        .block-heading-1 .block-content {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .block-heading-2 .block-content {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .block-heading-3 .block-content {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .block-text .block-content {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .block-equation {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+        }
+
+        .block-equation .block-content {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+        }
+
+        .block-callout {
+            border-left: 4px solid var(--primary);
+            background: #eff6ff;
+            padding: 1rem 1rem 1rem 1.5rem;
+        }
+
+        .block-callout.example {
+            border-left-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .block-callout.warning {
+            border-left-color: var(--warning);
+            background: #fffbeb;
+        }
+
+        .block-callout.info {
+            border-left-color: var(--info);
+            background: #eff6ff;
+        }
+
+        .block-callout-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            outline: none;
+            cursor: text;
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .block-callout-title[contenteditable="true"] {
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .block-image-container {
+            text-align: center;
+        }
+
+        .block-image-upload {
+            border: 2px dashed var(--border);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .block-image-upload:hover {
+            border-color: var(--primary);
+            background: var(--bg-tertiary);
+        }
+
+        .block-image-preview {
+            max-width: 100%;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .block-image-caption {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            outline: none;
+            cursor: text;
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .block-image-caption[contenteditable="true"] {
+            background: #fffef0;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .block-divider {
+            padding: 0.5rem 0;
+        }
+
+        .block-divider hr {
+            border: none;
+            border-top: 2px solid var(--border);
+        }
+
+        .block-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.5rem 0;
+        }
+
+        .block-table th,
+        .block-table td {
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            min-width: 100px;
+        }
+
+        .block-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        .block-table td {
+            background: white;
+        }
+
+        .block-table-cell {
+            outline: none;
+            min-height: 1.5rem;
+            cursor: text;
+            padding: 0.25rem;
+        }
+
+        .block-table-cell:empty:before {
+            content: 'Double-click to edit';
+            color: var(--text-secondary);
+            opacity: 0.3;
+            font-size: 0.75rem;
+        }
+
+        .block-table-cell:hover:not([contenteditable="true"]) {
+            background: var(--bg-secondary);
+        }
+
+        .block-table-cell[contenteditable="true"] {
+            background: #fffef0;
+            box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+
+        .block-two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .block-column {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 0.375rem;
+            min-height: 100px;
+        }
+
+        .block-column-content {
+            outline: none;
+            cursor: text;
+            min-height: 60px;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .block-column-content:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        .block-column-content:hover:not([contenteditable="true"]) {
+            background: var(--bg-tertiary);
+        }
+
+        .block-column-content[contenteditable="true"] {
+            background: #fffef0;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .block-video {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 0.5rem;
+        }
+
+        .block-video iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .block-list ul,
+        .block-list ol {
+            padding-left: 2rem;
+        }
+
+        .block-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .block-list-editor {
+            outline: none;
+        }
+
+        .block-list-editor:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .preview-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .preview-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-content {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        /* Markdown/Chemistry Rendering */
+        .markdown-content h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1.5rem 0 1rem 0;
+            color: var(--text-primary);
+        }
+
+        .markdown-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.75rem 0;
+            color: var(--text-primary);
+        }
+
+        .markdown-content h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .markdown-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .markdown-content strong {
+            font-weight: 600;
+        }
+
+        .markdown-content em {
+            font-style: italic;
+        }
+
+        .markdown-content code {
+            background: var(--bg-secondary);
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-content table th,
+        .markdown-content table td {
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .markdown-content table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        /* KaTeX Math Styling */
+        .katex-display {
+            margin: 1rem 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .katex {
+            font-size: 1.1em;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            background: var(--success);
+            color: white;
+        }
+
+        .toast.error {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-muted {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚗️ Chemistry Content Builder</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="app.importHTML()">📥 Import HTML</button>
+                <button class="btn btn-secondary" onclick="app.importJSON()">📥 Import JSON</button>
+                <button class="btn btn-success" onclick="app.exportJSON()">📤 Export JSON</button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="btn btn-primary" style="width: 100%;" onclick="app.addSection()">+ Add Section</button>
+            </div>
+            <div class="section-list" id="sectionList"></div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas">
+            <div id="canvasContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <h3>No Section Selected</h3>
+                    <p class="text-muted">Select a section from the sidebar or create a new one to start building content.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+            <div class="preview-header">
+                <h3 class="preview-title">Live Preview</h3>
+                <p class="text-muted" style="font-size: 0.875rem;">See how your content will appear in the app</p>
+            </div>
+            <div class="preview-content" id="previewContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">👁️</div>
+                    <p class="text-muted">Preview will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Modal -->
+    <div id="sectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Section Details</h3>
+                <span class="modal-close" onclick="app.closeSectionModal()">×</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Section ID</label>
+                    <input type="text" class="form-input" id="sectionIdInput" placeholder="e.g., 1.1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Section Title</label>
+                    <input type="text" class="form-input" id="sectionTitleInput" placeholder="e.g., Special Features of Carbon">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="app.closeSectionModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="app.saveSectionModal()">Save Section</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            data: {
+                sections: [],
+                currentSection: null,
+                currentBlock: null,
+                editingBlock: null,  // NEW: Track which block is being edited
+                draggedBlock: null
+            },
+
+            init() {
+                this.loadFromStorage();
+                this.render();
+                this.setupEventListeners();
+            },
+
+            setupEventListeners() {
+                // Click outside to deselect block and exit edit mode
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.content-block') && !e.target.closest('.block-toolbar') && !e.target.closest('.block-menu')) {
+                        this.deselectBlock();
+                        this.exitEditMode();
+                    }
+                });
+
+                // Close block menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.add-block-container')) {
+                        const menus = document.querySelectorAll('.block-menu');
+                        menus.forEach(menu => menu.classList.remove('active'));
+                    }
+                });
+
+                // Escape key to exit edit mode
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.data.editingBlock) {
+                        this.exitEditMode();
+                    }
+                });
+            },
+
+            // Section Management
+            addSection() {
+                document.getElementById('sectionIdInput').value = '';
+                document.getElementById('sectionTitleInput').value = '';
+                document.getElementById('sectionModal').classList.add('active');
+            },
+
+            saveSectionModal() {
+                const id = document.getElementById('sectionIdInput').value.trim();
+                const title = document.getElementById('sectionTitleInput').value.trim();
+
+                if (!id || !title) {
+                    this.showToast('Please fill in all fields', 'error');
+                    return;
+                }
+
+                const existingSection = this.data.sections.find(s => s.id === id);
+                if (existingSection) {
+                    existingSection.title = title;
+                } else {
+                    this.data.sections.push({
+                        id: id,
+                        title: title,
+                        blocks: []
+                    });
+                    this.data.currentSection = id;
+                }
+
+                this.closeSectionModal();
+                this.saveToStorage();
+                this.render();
+                this.showToast('Section saved', 'success');
+            },
+
+            closeSectionModal() {
+                document.getElementById('sectionModal').classList.remove('active');
+            },
+
+            selectSection(sectionId) {
+                this.data.currentSection = sectionId;
+                this.data.currentBlock = null;
+                this.render();
+            },
+
+            deleteSection(sectionId) {
+                if (!confirm('Delete this section and all its content?')) return;
+
+                this.data.sections = this.data.sections.filter(s => s.id !== sectionId);
+                
+                if (this.data.currentSection === sectionId) {
+                    this.data.currentSection = null;
+                }
+
+                this.saveToStorage();
+                this.render();
+                this.showToast('Section deleted', 'success');
+            },
+
+            getCurrentSection() {
+                return this.data.sections.find(s => s.id === this.data.currentSection);
+            },
+
+            // Block Management
+            addBlock(type) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                // Prevent adding removed block types
+                if (type === 'two-column' || type === 'video') {
+                    this.showToast('This block type has been removed', 'error');
+                    return;
+                }
+
+                const blockId = 'block_' + Date.now();
+                const block = {
+                    id: blockId,
+                    type: type,
+                    content: '',
+                    metadata: {}
+                };
+
+                // Set defaults for specific block types
+                if (type === 'heading') {
+                    block.metadata.level = 2;
+                } else if (type === 'callout') {
+                    block.metadata.variant = 'info';
+                    block.metadata.title = '';
+                } else if (type === 'image') {
+                    block.metadata.caption = '';
+                    block.metadata.dataUrl = null;
+                } else if (type === 'table') {
+                    block.metadata.rows = 3;
+                    block.metadata.cols = 3;
+                    block.content = this.createTableData(3, 3);
+                } else if (type === 'list') {
+                    block.metadata.ordered = false;
+                }
+
+                section.blocks.push(block);
+                this.saveToStorage();
+                this.render();
+                
+                // Close block menu
+                const menus = document.querySelectorAll('.block-menu');
+                menus.forEach(menu => menu.classList.remove('active'));
+            },
+
+            createTableData(rows, cols) {
+                const data = [];
+                for (let i = 0; i < rows; i++) {
+                    const row = [];
+                    for (let j = 0; j < cols; j++) {
+                        row.push('');
+                    }
+                    data.push(row);
+                }
+                return data;
+            },
+
+            selectBlock(blockId) {
+                this.data.currentBlock = blockId;
+                this.render();
+            },
+
+            deselectBlock() {
+                if (this.data.currentBlock) {
+                    this.exitEditMode();
+                    this.data.currentBlock = null;
+                    this.render();
+                }
+            },
+
+            enterEditMode(blockId) {
+                this.data.editingBlock = blockId;
+                this.data.currentBlock = blockId;
+                
+                // Find the content element and make it editable
+                setTimeout(() => {
+                    const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+                    if (!blockElement) return;
+
+                    const contentElement = blockElement.querySelector('.block-content');
+                    if (contentElement) {
+                        contentElement.contentEditable = 'true';
+                        contentElement.focus();
+                        
+                        // Place cursor at end
+                        const range = document.createRange();
+                        const sel = window.getSelection();
+                        if (contentElement.childNodes.length > 0) {
+                            range.selectNodeContents(contentElement);
+                            range.collapse(false);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                    }
+                }, 0);
+            },
+
+            exitEditMode() {
+                if (this.data.editingBlock) {
+                    const blockElement = document.querySelector(`[data-block-id="${this.data.editingBlock}"]`);
+                    if (blockElement) {
+                        const contentElements = blockElement.querySelectorAll('[contenteditable="true"]');
+                        contentElements.forEach(el => {
+                            el.contentEditable = 'false';
+                            el.blur();
+                        });
+                    }
+                    this.data.editingBlock = null;
+                }
+            },
+
+            deleteBlock(blockId) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                section.blocks = section.blocks.filter(b => b.id !== blockId);
+                this.data.currentBlock = null;
+                this.saveToStorage();
+                this.render();
+            },
+
+            duplicateBlock(blockId) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                const block = section.blocks.find(b => b.id === blockId);
+                if (!block) return;
+
+                const newBlock = JSON.parse(JSON.stringify(block));
+                newBlock.id = 'block_' + Date.now();
+
+                const index = section.blocks.findIndex(b => b.id === blockId);
+                section.blocks.splice(index + 1, 0, newBlock);
+
+                this.saveToStorage();
+                this.render();
+            },
+
+            moveBlockUp(blockId) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                const index = section.blocks.findIndex(b => b.id === blockId);
+                if (index > 0) {
+                    [section.blocks[index - 1], section.blocks[index]] = [section.blocks[index], section.blocks[index - 1]];
+                    this.saveToStorage();
+                    this.render();
+                }
+            },
+
+            moveBlockDown(blockId) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                const index = section.blocks.findIndex(b => b.id === blockId);
+                if (index < section.blocks.length - 1) {
+                    [section.blocks[index], section.blocks[index + 1]] = [section.blocks[index + 1], section.blocks[index]];
+                    this.saveToStorage();
+                    this.render();
+                }
+            },
+
+            // Drag and Drop
+            handleDragStart(e, blockId) {
+                this.data.draggedBlock = blockId;
+                e.target.classList.add('dragging');
+            },
+
+            handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+                this.data.draggedBlock = null;
+            },
+
+            handleDragOver(e) {
+                e.preventDefault();
+            },
+
+            handleDrop(e, targetBlockId) {
+                e.preventDefault();
+                
+                if (!this.data.draggedBlock || this.data.draggedBlock === targetBlockId) return;
+
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                const draggedIndex = section.blocks.findIndex(b => b.id === this.data.draggedBlock);
+                const targetIndex = section.blocks.findIndex(b => b.id === targetBlockId);
+
+                const [draggedBlock] = section.blocks.splice(draggedIndex, 1);
+                section.blocks.splice(targetIndex, 0, draggedBlock);
+
+                this.saveToStorage();
+                this.render();
+            },
+
+            // Block Content Updates
+            updateBlockContent(blockId, content) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                const block = section.blocks.find(b => b.id === blockId);
+                if (block) {
+                    // For list blocks, we need to handle HTML line breaks
+                    if (block.type === 'list') {
+                        // Get the element to access innerHTML
+                        const element = document.querySelector(`[data-block-id="${blockId}"] .block-content`);
+                        if (element) {
+                            // Convert HTML to plain text with newlines
+                            let html = element.innerHTML;
+                            // Replace <br> with newline
+                            html = html.replace(/<br\s*\/?>/gi, '\n');
+                            // Replace </div><div> with newline
+                            html = html.replace(/<\/div><div>/gi, '\n');
+                            // Remove opening div
+                            html = html.replace(/<div>/gi, '');
+                            // Remove closing div
+                            html = html.replace(/<\/div>/gi, '');
+                            // Remove any remaining HTML tags
+                            html = html.replace(/<[^>]+>/g, '');
+                            // Decode HTML entities
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = html;
+                            block.content = tempDiv.textContent || tempDiv.innerText || '';
+                        } else {
+                            block.content = content;
+                        }
+                    } else {
+                        block.content = content;
+                    }
+                    this.saveToStorage();
+                    this.updatePreview();
+                }
+            },
+
+            updateBlockMetadata(blockId, key, value) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                const block = section.blocks.find(b => b.id === blockId);
+                if (block) {
+                    block.metadata[key] = value;
+                    this.saveToStorage();
+                    this.render();
+                }
+            },
+
+            handleImageUpload(blockId, event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.updateBlockMetadata(blockId, 'dataUrl', e.target.result);
+                };
+                reader.readAsDataURL(file);
+            },
+
+            // Rendering
+            render() {
+                this.renderSidebar();
+                this.renderCanvas();
+                this.updatePreview();
+            },
+
+            renderSidebar() {
+                const container = document.getElementById('sectionList');
+                
+                if (this.data.sections.length === 0) {
+                    container.innerHTML = '<div class="empty-state text-muted" style="padding: 1rem; text-align: center; font-size: 0.75rem;">No sections yet</div>';
+                    return;
+                }
+
+                container.innerHTML = this.data.sections.map(section => `
+                    <div class="section-item ${section.id === this.data.currentSection ? 'active' : ''}"
+                        onclick="app.selectSection('${section.id}')">
+                        <div>
+                            <div class="section-title">${section.id}: ${section.title}</div>
+                            <div class="section-count">${section.blocks.length} blocks</div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            renderCanvas() {
+                const section = this.getCurrentSection();
+                const container = document.getElementById('canvasContent');
+
+                if (!section) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📚</div>
+                            <h3>No Section Selected</h3>
+                            <p class="text-muted">Select a section from the sidebar or create a new one to start building content.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="canvas-header">
+                        <div>
+                            <h2 class="canvas-title">${section.id}: ${section.title}</h2>
+                            <p class="text-muted" style="font-size: 0.875rem;">Build your chemistry content using blocks</p>
+                        </div>
+                        <button class="btn btn-danger btn-small" onclick="app.deleteSection('${section.id}')">Delete Section</button>
+                    </div>
+
+                    <div class="add-block-container">
+                        <button class="add-block-btn" onclick="app.toggleBlockMenu(event)">
+                            <span>+</span>
+                            <span>Add a block</span>
+                        </button>
+                        ${this.renderBlockMenu()}
+                    </div>
+                `;
+
+                section.blocks.forEach(block => {
+                    html += this.renderBlock(block);
+                });
+
+                container.innerHTML = html;
+
+                // Setup input listeners for editable content
+                setTimeout(() => {
+                    section.blocks.forEach(block => {
+                        const element = document.querySelector(`[data-block-id="${block.id}"] .block-content`);
+                        if (element) {
+                            element.addEventListener('input', (e) => {
+                                // Use textContent to preserve markdown/LaTeX syntax
+                                this.updateBlockContent(block.id, e.target.textContent);
+                            });
+                        }
+                    });
+                }, 0);
+            },
+
+            toggleBlockMenu(event) {
+                event.stopPropagation();
+                const menu = event.target.closest('.add-block-container').querySelector('.block-menu');
+                menu.classList.toggle('active');
+            },
+
+            renderBlockMenu() {
+                return `
+                    <div class="block-menu">
+                        <div class="block-menu-group">
+                            <div class="block-menu-label">Essential Blocks</div>
+                            <div class="block-menu-item" onclick="app.addBlock('heading')">
+                                <div class="block-menu-icon">H</div>
+                                <div class="block-menu-info">
+                                    <h4>Heading</h4>
+                                    <p>Section title or heading</p>
+                                </div>
+                            </div>
+                            <div class="block-menu-item" onclick="app.addBlock('text')">
+                                <div class="block-menu-icon">T</div>
+                                <div class="block-menu-info">
+                                    <h4>Text</h4>
+                                    <p>Paragraph with markdown support</p>
+                                </div>
+                            </div>
+                            <div class="block-menu-item" onclick="app.addBlock('equation')">
+                                <div class="block-menu-icon">∑</div>
+                                <div class="block-menu-info">
+                                    <h4>Equation</h4>
+                                    <p>LaTeX math equation</p>
+                                </div>
+                            </div>
+                            <div class="block-menu-item" onclick="app.addBlock('image')">
+                                <div class="block-menu-icon">🖼️</div>
+                                <div class="block-menu-info">
+                                    <h4>Image</h4>
+                                    <p>Upload image with caption</p>
+                                </div>
+                            </div>
+                            <div class="block-menu-item" onclick="app.addBlock('table')">
+                                <div class="block-menu-icon">📊</div>
+                                <div class="block-menu-info">
+                                    <h4>Table</h4>
+                                    <p>Data table with cells</p>
+                                </div>
+                            </div>
+                            <div class="block-menu-item" onclick="app.addBlock('list')">
+                                <div class="block-menu-icon">•</div>
+                                <div class="block-menu-info">
+                                    <h4>List</h4>
+                                    <p>Bulleted or numbered list</p>
+                                </div>
+                            </div>
+                            <div class="block-menu-item" onclick="app.addBlock('callout')">
+                                <div class="block-menu-icon">💡</div>
+                                <div class="block-menu-info">
+                                    <h4>Callout</h4>
+                                    <p>Highlighted box for notes</p>
+                                </div>
+                            </div>
+                            <div class="block-menu-item" onclick="app.addBlock('divider')">
+                                <div class="block-menu-icon">―</div>
+                                <div class="block-menu-info">
+                                    <h4>Divider</h4>
+                                    <p>Horizontal line separator</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderBlock(block) {
+                const isActive = block.id === this.data.currentBlock;
+                const isEditing = block.id === this.data.editingBlock;
+                
+                // For table and list blocks, don't add ondblclick to wrapper (they handle their own editing)
+                const skipBlockDblClick = block.type === 'table' || block.type === 'list' || block.type === 'divider';
+                
+                let blockHTML = `
+                    <div class="content-block block-${block.type} ${isActive ? 'active' : ''}" 
+                        data-block-id="${block.id}"
+                        draggable="true"
+                        ondragstart="app.handleDragStart(event, '${block.id}')"
+                        ondragend="app.handleDragEnd(event)"
+                        ondragover="app.handleDragOver(event)"
+                        ondrop="app.handleDrop(event, '${block.id}')"
+                        onclick="event.stopPropagation(); app.selectBlock('${block.id}')"
+                        ${skipBlockDblClick ? '' : 'ondblclick="event.stopPropagation(); app.enterEditMode(\'' + block.id + '\')"'}>
+                        
+                        <div class="block-drag-handle">⋮⋮</div>
+                        
+                        <div class="block-toolbar">
+                            <button class="btn btn-secondary btn-icon btn-small" onclick="event.stopPropagation(); app.moveBlockUp('${block.id}')" title="Move Up">↑</button>
+                            <button class="btn btn-secondary btn-icon btn-small" onclick="event.stopPropagation(); app.moveBlockDown('${block.id}')" title="Move Down">↓</button>
+                            <button class="btn btn-secondary btn-icon btn-small" onclick="event.stopPropagation(); app.duplicateBlock('${block.id}')" title="Duplicate">⧉</button>
+                            <button class="btn btn-danger btn-icon btn-small" onclick="event.stopPropagation(); app.deleteBlock('${block.id}')" title="Delete">×</button>
+                        </div>
+                `;
+
+                // Render block content based on type
+                switch (block.type) {
+                    case 'heading':
+                        const headingClass = `block-heading-${block.metadata.level || 2}`;
+                        blockHTML += `
+                            <div class="${headingClass}">
+                                <div class="block-content" data-placeholder="Heading text..." ondblclick="event.stopPropagation(); app.enterEditMode('${block.id}')">${this.escapeHtml(block.content)}</div>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <select onchange="app.updateBlockMetadata('${block.id}', 'level', parseInt(this.value))" onclick="event.stopPropagation()" style="padding: 0.25rem; border: 1px solid var(--border); border-radius: 0.25rem;">
+                                    <option value="2" ${block.metadata.level === 2 ? 'selected' : ''}>H2</option>
+                                    <option value="3" ${block.metadata.level === 3 ? 'selected' : ''}>H3</option>
+                                    <option value="4" ${block.metadata.level === 4 ? 'selected' : ''}>H4</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+
+                    case 'text':
+                        blockHTML += `<div class="block-content" data-placeholder="Type your text here... Use markdown for formatting." ondblclick="event.stopPropagation(); app.enterEditMode('${block.id}')">${this.escapeHtml(block.content)}</div>`;
+                        break;
+
+                    case 'equation':
+                        blockHTML += `<div class="block-content" data-placeholder="Enter LaTeX equation, e.g., C_nH_{2n+2}" ondblclick="event.stopPropagation(); app.enterEditMode('${block.id}')">${this.escapeHtml(block.content)}</div>`;
+                        break;
+
+                    case 'image':
+                        if (block.metadata.dataUrl) {
+                            blockHTML += `
+                                <div class="block-image-container">
+                                    <img src="${block.metadata.dataUrl}" class="block-image-preview" />
+                                    <div class="block-image-caption" data-placeholder="Add caption..." 
+                                        ondblclick="event.stopPropagation(); this.contentEditable='true'; this.focus();"
+                                        onblur="this.contentEditable='false'; app.updateBlockMetadata('${block.id}', 'caption', this.textContent)"
+                                        oninput="app.updateBlockMetadata('${block.id}', 'caption', this.textContent)">${this.escapeHtml(block.metadata.caption)}</div>
+                                    <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); app.updateBlockMetadata('${block.id}', 'dataUrl', null)" style="margin-top: 0.5rem;">Remove Image</button>
+                                </div>
+                            `;
+                        } else {
+                            blockHTML += `
+                                <div class="block-image-upload" onclick="event.stopPropagation(); document.getElementById('imageUpload_${block.id}').click()">
+                                    <div>📷 Click to upload image</div>
+                                </div>
+                                <input type="file" id="imageUpload_${block.id}" accept="image/*" style="display:none;" onchange="app.handleImageUpload('${block.id}', event)" />
+                            `;
+                        }
+                        break;
+
+                    case 'table':
+                        const tableData = Array.isArray(block.content) ? block.content : this.createTableData(3, 3);
+                        blockHTML += '<div class="block-table"><table><tbody>';
+                        tableData.forEach((row, i) => {
+                            blockHTML += '<tr>';
+                            row.forEach((cell, j) => {
+                                const tag = i === 0 ? 'th' : 'td';
+                                const cellContent = cell || '';
+                                blockHTML += `<${tag}>`;
+                                blockHTML += `<div class="block-table-cell" 
+                                    data-row="${i}" 
+                                    data-col="${j}"
+                                    ondblclick="event.stopPropagation(); this.contentEditable='true'; this.focus();"
+                                    onblur="this.contentEditable='false'; app.updateTableCell('${block.id}', ${i}, ${j}, this.textContent)"
+                                    oninput="app.updateTableCell('${block.id}', ${i}, ${j}, this.textContent)">${cellContent}</div>`;
+                                blockHTML += `</${tag}>`;
+                            });
+                            blockHTML += '</tr>';
+                        });
+                        blockHTML += '</tbody></table></div>';
+                        break;
+
+                    case 'list':
+                        const listTag = block.metadata.ordered ? 'ol' : 'ul';
+                        blockHTML += `
+                            <div style="margin-bottom: 0.5rem;">
+                                <label style="font-size: 0.875rem;">
+                                    <input type="checkbox" ${block.metadata.ordered ? 'checked' : ''} 
+                                        onchange="app.updateBlockMetadata('${block.id}', 'ordered', this.checked)" 
+                                        onclick="event.stopPropagation()">
+                                    Numbered list
+                                </label>
+                                <span style="margin-left: 1rem; font-size: 0.75rem; color: var(--text-secondary);">
+                                    Tip: Use 2 spaces or Tab to indent for sub-items
+                                </span>
+                            </div>
+                        `;
+                        
+                        // Parse content into nested list structure
+                        const listContent = this.parseNestedList(block.content || '', block.metadata.ordered);
+                        if (listContent) {
+                            blockHTML += listContent;
+                        }
+                        
+                        // Editable textarea for adding/editing items
+                        blockHTML += `
+                            <textarea class="block-list-editor" 
+                                placeholder="Type list items, one per line...&#10;Use 2 spaces or Tab to indent for sub-items&#10;&#10;Example:&#10;Main item 1&#10;  Sub-item 1.1&#10;  Sub-item 1.2&#10;Main item 2" 
+                                onclick="event.stopPropagation()"
+                                oninput="app.updateBlockContent('${block.id}', this.value)"
+                                onblur="app.updateBlockContent('${block.id}', this.value)"
+                                style="width: 100%; min-height: 120px; padding: 0.5rem; border: 1px dashed var(--border); border-radius: 0.25rem; font-family: 'Courier New', monospace; font-size: 0.875rem; resize: vertical; margin-top: 0.5rem;">${block.content || ''}</textarea>
+                        `;
+                        break;
+                        break;
+
+                    case 'callout':
+                        blockHTML += `
+                            <div style="margin-bottom: 0.5rem;">
+                                <select onchange="app.updateBlockMetadata('${block.id}', 'variant', this.value)" onclick="event.stopPropagation()" style="padding: 0.25rem; border: 1px solid var(--border); border-radius: 0.25rem; margin-right: 0.5rem;">
+                                    <option value="info" ${block.metadata.variant === 'info' ? 'selected' : ''}>💡 Info</option>
+                                    <option value="example" ${block.metadata.variant === 'example' ? 'selected' : ''}>✓ Example</option>
+                                    <option value="warning" ${block.metadata.variant === 'warning' ? 'selected' : ''}>⚠️ Warning</option>
+                                </select>
+                            </div>
+                            <div class="block-callout ${block.metadata.variant || 'info'}">
+                                <div class="block-callout-title" data-placeholder="Title..." 
+                                    ondblclick="event.stopPropagation(); this.contentEditable='true'; this.focus();"
+                                    onblur="this.contentEditable='false'; app.updateBlockMetadata('${block.id}', 'title', this.textContent)"
+                                    oninput="app.updateBlockMetadata('${block.id}', 'title', this.textContent)">${this.escapeHtml(block.metadata.title)}</div>
+                                <div class="block-content" data-placeholder="Callout content..." ondblclick="event.stopPropagation(); app.enterEditMode('${block.id}')">${this.escapeHtml(block.content)}</div>
+                            </div>
+                        `;
+                        break;
+
+                    case 'divider':
+                        blockHTML += '<div class="block-divider"><hr /></div>';
+                        break;
+                }
+
+                blockHTML += '</div>';
+                return blockHTML;
+            },
+
+            updateTableCell(blockId, row, col, value) {
+                const section = this.getCurrentSection();
+                if (!section) return;
+
+                const block = section.blocks.find(b => b.id === blockId);
+                if (block && Array.isArray(block.content)) {
+                    block.content[row][col] = value;
+                    this.saveToStorage();
+                    this.updatePreview();
+                }
+            },
+
+            extractYouTubeId(url) {
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = url.match(regExp);
+                return (match && match[2].length === 11) ? match[2] : null;
+            },
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
+            parseNestedList(content, isOrdered) {
+                if (!content || !content.trim()) return '';
+                
+                const lines = content.split('\n');
+                const items = [];
+                
+                // Parse each line to determine indentation level
+                lines.forEach(line => {
+                    if (!line.trim()) return; // Skip empty lines
+                    
+                    // Count leading spaces/tabs (1 tab = 2 spaces)
+                    const normalizedLine = line.replace(/\t/g, '  ');
+                    const leadingSpaces = normalizedLine.match(/^ */)[0].length;
+                    const level = Math.floor(leadingSpaces / 2);
+                    const text = line.trim();
+                    
+                    items.push({ level, text });
+                });
+                
+                if (items.length === 0) return '';
+                
+                // Build nested HTML
+                let html = '';
+                let currentLevel = -1;
+                const tagStack = [];
+                
+                items.forEach((item, index) => {
+                    const { level, text } = item;
+                    
+                    // Close lists if going back to shallower level
+                    while (currentLevel >= level && tagStack.length > 0) {
+                        html += `</li></${tagStack.pop()}>`;
+                        currentLevel--;
+                    }
+                    
+                    // Open new nested list if going deeper
+                    while (currentLevel < level) {
+                        const tag = isOrdered ? 'ol' : 'ul';
+                        if (currentLevel >= 0) {
+                            html += `<${tag}>`;
+                        } else {
+                            html += `<${tag} style="margin-bottom: 0.5rem;">`;
+                        }
+                        tagStack.push(tag);
+                        currentLevel++;
+                    }
+                    
+                    // Close previous item at same level
+                    if (index > 0 && items[index - 1].level === level) {
+                        html += '</li>';
+                    }
+                    
+                    html += `<li>${text}`;
+                });
+                
+                // Close remaining open tags
+                html += '</li>';
+                while (tagStack.length > 0) {
+                    html += `</${tagStack.pop()}>`;
+                }
+                
+                return html;
+            },
+
+            // Text Rendering (same as MCQ editor)
+            renderText(text) {
+                if (!text) return '';
+                
+                if (!window.marked || !window.renderMathInElement) {
+                    return this.formatChemistry(text);
+                }
+                
+                try {
+                    let html = marked.parse(text, {
+                        breaks: true,
+                        gfm: true
+                    });
+                    
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    
+                    renderMathInElement(tempDiv, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\(', right: '\\)', display: false},
+                            {left: '\\[', right: '\\]', display: true}
+                        ],
+                        throwOnError: false,
+                        trust: true,
+                        strict: false
+                    });
+                    
+                    html = tempDiv.innerHTML;
+                    html = this.formatChemistryInHTML(html);
+                    
+                    return html;
+                } catch (error) {
+                    console.error('Rendering error:', error);
+                    return this.formatChemistry(text);
+                }
+            },
+            
+            formatChemistry(text) {
+                if (!text) return '';
+                
+                return text
+                    .replace(/(\d+)/g, '<sub>$1</sub>')
+                    .replace(/\^(\d+[-+]?)/g, '<sup>$1</sup>')
+                    .replace(/#/g, '≡')
+                    .replace(/\*/g, '·');
+            },
+            
+            formatChemistryInHTML(html) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                const walk = (node) => {
+                    if (node.nodeType === 3) {
+                        const parent = node.parentElement;
+                        if (parent && !parent.classList.contains('katex') && 
+                            !parent.classList.contains('katex-html') &&
+                            parent.tagName !== 'CODE' && 
+                            parent.tagName !== 'PRE') {
+                            
+                            const formatted = this.formatChemistry(node.textContent);
+                            if (formatted !== node.textContent) {
+                                const span = document.createElement('span');
+                                span.innerHTML = formatted;
+                                node.replaceWith(span);
+                            }
+                        }
+                    } else if (node.nodeType === 1 && node.childNodes.length > 0) {
+                        Array.from(node.childNodes).forEach(child => walk(child));
+                    }
+                };
+                
+                walk(tempDiv);
+                return tempDiv.innerHTML;
+            },
+
+            // Preview
+            updatePreview() {
+                const section = this.getCurrentSection();
+                const container = document.getElementById('previewContent');
+
+                if (!section || section.blocks.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👁️</div>
+                            <p class="text-muted">Preview will appear here</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<div class="markdown-content">';
+                
+                section.blocks.forEach(block => {
+                    html += this.renderBlockPreview(block);
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
+
+                // Render math after adding to DOM
+                setTimeout(() => {
+                    if (window.renderMathInElement) {
+                        renderMathInElement(container, {
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false},
+                                {left: '\\(', right: '\\)', display: false},
+                                {left: '\\[', right: '\\]', display: true}
+                            ],
+                            throwOnError: false,
+                            trust: true,
+                            strict: false
+                        });
+                    }
+                }, 0);
+            },
+
+            renderBlockPreview(block) {
+                let html = '';
+
+                switch (block.type) {
+                    case 'heading':
+                        const level = block.metadata.level || 2;
+                        html = `<h${level}>${this.renderText(block.content)}</h${level}>`;
+                        break;
+
+                    case 'text':
+                        html = `<p>${this.renderText(block.content)}</p>`;
+                        break;
+
+                    case 'equation':
+                        html = `<div class="katex-display">$${block.content}$</div>`;
+                        break;
+
+                    case 'image':
+                        if (block.metadata.dataUrl) {
+                            html = `
+                                <div style="text-align: center; margin: 1.5rem 0;">
+                                    <img src="${block.metadata.dataUrl}" style="max-width: 100%; border-radius: 0.5rem;" />
+                                    ${block.metadata.caption ? `<p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">${this.renderText(block.metadata.caption)}</p>` : ''}
+                                </div>
+                            `;
+                        }
+                        break;
+
+                    case 'table':
+                        if (Array.isArray(block.content)) {
+                            html = '<table><tbody>';
+                            block.content.forEach((row, i) => {
+                                html += '<tr>';
+                                row.forEach((cell) => {
+                                    const tag = i === 0 ? 'th' : 'td';
+                                    html += `<${tag}>${this.renderText(cell)}</${tag}>`;
+                                });
+                                html += '</tr>';
+                            });
+                            html += '</tbody></table>';
+                        }
+                        break;
+
+                    case 'list':
+                        if (!block.content || !block.content.trim()) break;
+                        
+                        const lines = block.content.split('\n');
+                        const listItems = [];
+                        
+                        // Parse lines with indentation
+                        lines.forEach(line => {
+                            if (!line.trim()) return;
+                            const normalizedLine = line.replace(/\t/g, '  ');
+                            const leadingSpaces = normalizedLine.match(/^ */)[0].length;
+                            const level = Math.floor(leadingSpaces / 2);
+                            const text = line.trim();
+                            listItems.push({ level, text });
+                        });
+                        
+                        if (listItems.length === 0) break;
+                        
+                        // Build nested HTML with renderText for chemistry notation
+                        html = '';
+                        let currentLevel = -1;
+                        const listTagStack = [];
+                        const listTag = block.metadata.ordered ? 'ol' : 'ul';
+                        
+                        listItems.forEach((item, index) => {
+                            const { level, text } = item;
+                            
+                            // Close lists if going back to shallower level
+                            while (currentLevel >= level && listTagStack.length > 0) {
+                                html += `</li></${listTagStack.pop()}>`;
+                                currentLevel--;
+                            }
+                            
+                            // Open new nested list if going deeper
+                            while (currentLevel < level) {
+                                html += currentLevel >= 0 ? `<${listTag}>` : `<${listTag}>`;
+                                listTagStack.push(listTag);
+                                currentLevel++;
+                            }
+                            
+                            // Close previous item at same level
+                            if (index > 0 && listItems[index - 1].level === level) {
+                                html += '</li>';
+                            }
+                            
+                            html += `<li>${this.renderText(text)}`;
+                        });
+                        
+                        // Close remaining open tags
+                        html += '</li>';
+                        while (listTagStack.length > 0) {
+                            html += `</${listTagStack.pop()}>`;
+                        }
+                        break;
+
+                    case 'callout':
+                        const variantStyles = {
+                            info: 'border-left: 4px solid var(--info); background: #eff6ff;',
+                            example: 'border-left: 4px solid var(--success); background: #f0fdf4;',
+                            warning: 'border-left: 4px solid var(--warning); background: #fffbeb;'
+                        };
+                        const style = variantStyles[block.metadata.variant] || variantStyles.info;
+                        html = `
+                            <div style="${style} padding: 1rem 1rem 1rem 1.5rem; border-radius: 0.5rem; margin: 1rem 0;">
+                                ${block.metadata.title ? `<div style="font-weight: 600; margin-bottom: 0.5rem;">${this.renderText(block.metadata.title)}</div>` : ''}
+                                <div>${this.renderText(block.content)}</div>
+                            </div>
+                        `;
+                        break;
+
+                    case 'divider':
+                        html = '<hr style="border: none; border-top: 2px solid var(--border); margin: 1.5rem 0;" />';
+                        break;
+                }
+
+                return html;
+            },
+
+            // Import/Export
+            exportJSON() {
+                const output = {};
+
+                this.data.sections.forEach(section => {
+                    output[section.id] = {
+                        title: section.title,
+                        learnBlocks: section.blocks,
+                        learn: this.generateHTMLFromBlocks(section.blocks)
+                    };
+                });
+
+                const json = JSON.stringify(output, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'chemistry-content.json';
+                a.click();
+                URL.revokeObjectURL(url);
+
+                this.showToast('Content exported successfully', 'success');
+            },
+
+            generateHTMLFromBlocks(blocks) {
+                let html = '';
+                blocks.forEach(block => {
+                    html += this.renderBlockPreview(block);
+                });
+                return html;
+            },
+
+            importJSON() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const json = JSON.parse(event.target.result);
+                            this.processImportedJSON(json);
+                            this.showToast('Content imported successfully', 'success');
+                        } catch (err) {
+                            this.showToast('Error parsing JSON: ' + err.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            },
+
+            processImportedJSON(json) {
+                this.data.sections = [];
+
+                Object.keys(json).forEach(sectionId => {
+                    const data = json[sectionId];
+                    
+                    // Check if it has learnBlocks (new format)
+                    if (data.learnBlocks && Array.isArray(data.learnBlocks)) {
+                        this.data.sections.push({
+                            id: sectionId,
+                            title: data.title || sectionId,
+                            blocks: data.learnBlocks
+                        });
+                    } else if (data.learn && typeof data.learn === 'string') {
+                        // Convert HTML to blocks
+                        const blocks = this.convertHTMLToBlocks(data.learn);
+                        this.data.sections.push({
+                            id: sectionId,
+                            title: data.title || sectionId,
+                            blocks: blocks
+                        });
+                    }
+                });
+
+                this.saveToStorage();
+                this.render();
+            },
+
+            importHTML() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.html,.htm';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const html = event.target.result;
+                            
+                            // Prompt for section ID
+                            const sectionId = prompt('Enter section ID (e.g., 1.1):');
+                            if (!sectionId) return;
+
+                            const sectionTitle = prompt('Enter section title:');
+                            if (!sectionTitle) return;
+
+                            const blocks = this.convertHTMLToBlocks(html);
+                            
+                            this.data.sections.push({
+                                id: sectionId,
+                                title: sectionTitle,
+                                blocks: blocks
+                            });
+
+                            this.data.currentSection = sectionId;
+                            this.saveToStorage();
+                            this.render();
+                            this.showToast('HTML imported and converted to blocks', 'success');
+                        } catch (err) {
+                            this.showToast('Error importing HTML: ' + err.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            },
+
+            convertHTMLToBlocks(html) {
+                const blocks = [];
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+
+                const processNode = (node) => {
+                    if (node.nodeType === 1) { // Element node
+                        const tagName = node.tagName.toLowerCase();
+                        
+                        if (tagName === 'h2' || tagName === 'h3' || tagName === 'h4') {
+                            blocks.push({
+                                id: 'block_' + Date.now() + '_' + Math.random(),
+                                type: 'heading',
+                                content: node.textContent.trim(),
+                                metadata: {
+                                    level: parseInt(tagName.charAt(1))
+                                }
+                            });
+                        } else if (tagName === 'p') {
+                            const text = node.innerHTML.trim();
+                            if (text) {
+                                blocks.push({
+                                    id: 'block_' + Date.now() + '_' + Math.random(),
+                                    type: 'text',
+                                    content: text,
+                                    metadata: {}
+                                });
+                            }
+                        } else if (tagName === 'ul' || tagName === 'ol') {
+                            const items = Array.from(node.querySelectorAll('li')).map(li => li.textContent.trim());
+                            blocks.push({
+                                id: 'block_' + Date.now() + '_' + Math.random(),
+                                type: 'list',
+                                content: items.join('\n'),
+                                metadata: {
+                                    ordered: tagName === 'ol'
+                                }
+                            });
+                        } else if (tagName === 'img') {
+                            blocks.push({
+                                id: 'block_' + Date.now() + '_' + Math.random(),
+                                type: 'image',
+                                content: '',
+                                metadata: {
+                                    dataUrl: node.src,
+                                    caption: node.alt || ''
+                                }
+                            });
+                        } else if (tagName === 'table') {
+                            const tableData = [];
+                            const rows = node.querySelectorAll('tr');
+                            rows.forEach(row => {
+                                const rowData = [];
+                                const cells = row.querySelectorAll('th, td');
+                                cells.forEach(cell => {
+                                    rowData.push(cell.textContent.trim());
+                                });
+                                if (rowData.length > 0) {
+                                    tableData.push(rowData);
+                                }
+                            });
+                            if (tableData.length > 0) {
+                                blocks.push({
+                                    id: 'block_' + Date.now() + '_' + Math.random(),
+                                    type: 'table',
+                                    content: tableData,
+                                    metadata: {}
+                                });
+                            }
+                        } else if (tagName === 'hr') {
+                            blocks.push({
+                                id: 'block_' + Date.now() + '_' + Math.random(),
+                                type: 'divider',
+                                content: '',
+                                metadata: {}
+                            });
+                        } else if (tagName === 'div') {
+                            // Check if it's a callout/example box
+                            if (node.className.includes('example') || node.className.includes('callout')) {
+                                const titleElement = node.querySelector('.example-title, .callout-title');
+                                const title = titleElement ? titleElement.textContent.trim() : '';
+                                const content = node.textContent.replace(title, '').trim();
+                                
+                                blocks.push({
+                                    id: 'block_' + Date.now() + '_' + Math.random(),
+                                    type: 'callout',
+                                    content: content,
+                                    metadata: {
+                                        variant: node.className.includes('example') ? 'example' : 'info',
+                                        title: title
+                                    }
+                                });
+                            } else {
+                                // Process children
+                                Array.from(node.childNodes).forEach(processNode);
+                            }
+                        } else {
+                            // Process children for other tags
+                            Array.from(node.childNodes).forEach(processNode);
+                        }
+                    }
+                };
+
+                Array.from(tempDiv.childNodes).forEach(processNode);
+
+                return blocks;
+            },
+
+            // Storage
+            saveToStorage() {
+                localStorage.setItem('chemContentBuilder', JSON.stringify(this.data));
+            },
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('chemContentBuilder');
+                if (saved) {
+                    this.data = JSON.parse(saved);
+                }
+            },
+
+            // Helpers
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
